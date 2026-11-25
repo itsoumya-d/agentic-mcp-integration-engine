@@ -1,6 +1,7 @@
 from typing import Dict
 from fastapi import APIRouter, HTTPException
 from agentic_mcp.models import AgentResponse, ExecutionStatus, WebhookPayload
+from agentic_mcp.ops_triage import GenAIOpsTriager, TriageReport, TriageRequest
 from agentic_mcp.orchestrator import AgenticOrchestrator
 from agentic_mcp.registry import MCPToolRegistry
 
@@ -32,3 +33,9 @@ async def get_run_status(correlation_id: str) -> AgentResponse:
     if correlation_id not in _runs:
         raise HTTPException(status_code=404, detail=f"Run '{correlation_id}' not found")
     return _runs[correlation_id]
+
+
+@router.post("/ops/triage", response_model=TriageReport)
+async def triage_incident(req: TriageRequest) -> TriageReport:
+    """Diagnose Kubernetes workload snapshots and API telemetry into actionable triage reports."""
+    return GenAIOpsTriager.diagnose(req.workload, req.telemetry)
